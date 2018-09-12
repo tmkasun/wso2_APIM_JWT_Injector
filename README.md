@@ -24,3 +24,14 @@ http --verify=no "https://localhost:8243/sample/1.1.1/allep" "accept: applicatio
 
 7. `x-myKey` is the custom header given in the API request, and this header and it's value will be available in the JWT token receive to the Echo MicroService
 8. Look for the JWT payload dump in the terminal
+
+### Console log from Echo Micro Service
+![echo_out](https://user-images.githubusercontent.com/3313885/45425477-1c9b2480-b6b7-11e8-90b6-ec186989634e.png)
+
+### Response from Echo Micro Service
+![echo_response](https://user-images.githubusercontent.com/3313885/45425478-1c9b2480-b6b7-11e8-8131-5b6047e018e6.png)
+
+### WSO2 APIM Console log from AlterJWTHandler
+![mediator_out](https://user-images.githubusercontent.com/3313885/45425479-1c9b2480-b6b7-11e8-907d-5496c621280a.png)
+
+
