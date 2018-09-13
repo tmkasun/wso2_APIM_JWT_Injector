@@ -18,14 +18,23 @@ import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.core.util.KeyStoreManager;
 
 import java.text.ParseException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 
 public class AlterJWTHandler extends AbstractHandler {
+
     private static final Log log = LogFactory.getLog(AlterJWTHandler.class);
 
-    private static final String HeaderName = "x-myKey";
+    private static final String CUSTOM_HEADER_NAME = "x-myKey";
+    private static final String JWT_HEADER_NAME = "X-JWT-Assertion";
+
     public boolean handleRequest(MessageContext messageContext) {
-        return alterJWT(messageContext);
+        Instant start = Instant.now();
+        boolean result = alterJWT(messageContext);
+        Instant end = Instant.now();
+        log.info("Time taken to handleRequest in AlterJWTHandler = "+ Duration.between(start, end));
+        return result;
     }
 
     public boolean handleResponse(MessageContext messageContext) {
@@ -34,21 +43,33 @@ public class AlterJWTHandler extends AbstractHandler {
 
     private boolean alterJWT(MessageContext synCtx) {
         Map headers = getTransportHeaders(synCtx);
-        String authHeader = getJWTHeader(headers);
         String myKey = getKeyHeader(headers);
+        if (myKey == null) {
+            log.warn("Can't find the " + CUSTOM_HEADER_NAME + " header in the API Request");
+            return true;
+        }
+        String jwtHeader = getJWTHeader(headers);
+        if (jwtHeader == null) {
+            log.warn("Can't find the " + JWT_HEADER_NAME + " header in the API Request");
+            return true;
+        }
 
         try {
-            SignedJWT idToken = SignedJWT.parse(authHeader);
+            SignedJWT idToken = SignedJWT.parse(jwtHeader);
             Payload pl = idToken.getPayload();
             JSONObject jsonPl = pl.toJSONObject();
-            jsonPl.put(HeaderName, myKey);
+            jsonPl.put(CUSTOM_HEADER_NAME, myKey);
             JWTClaimsSet.Builder jwtClaimsSetBuilder = new JWTClaimsSet.Builder(JWTClaimsSet.parse(jsonPl));
             KeyStoreManager keyStoreManager;
             keyStoreManager = KeyStoreManager.getInstance(MultitenantConstants.SUPER_TENANT_ID);
             keyStoreManager.getDefaultPrimaryCertificate();
             JWSSigner signer = new RSASSASigner(keyStoreManager.getDefaultPrivateKey());
             SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS512), jwtClaimsSetBuilder.build());
+
+            Instant start = Instant.now();
             signedJWT.sign(signer);
+            Instant end = Instant.now();
+            log.info("Time taken to sign the new JWT = "+ Duration.between(start, end));
 
             String newJwtString = signedJWT.serialize();
             setJWTHeader(synCtx, newJwtString);
@@ -65,11 +86,11 @@ public class AlterJWTHandler extends AbstractHandler {
     }
 
     private String getJWTHeader(Map headers) {
-        return (String) headers.get("X-JWT-Assertion");
+        return (String) headers.get(JWT_HEADER_NAME);
     }
 
     private String getKeyHeader(Map headers) {
-        return (String) headers.get(HeaderName);
+        return (String) headers.get(CUSTOM_HEADER_NAME);
     }
 
     private Map getTransportHeaders(MessageContext messageContext) {
@@ -78,7 +99,7 @@ public class AlterJWTHandler extends AbstractHandler {
     }
 
     private void setJWTHeader(MessageContext messageContext, String value) {
-        getTransportHeaders(messageContext).put("X-JWT-Assertion", value);
+        getTransportHeaders(messageContext).put(JWT_HEADER_NAME, value);
     }
 
 }

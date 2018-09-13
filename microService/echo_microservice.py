@@ -23,9 +23,10 @@ class EchoMicroService(server.BaseHTTPRequestHandler):
         self.send_header("Content-type", "application/json")
         self.end_headers()
         jwt = self.decodeJWT()
-        print("DEBUG: ------- JWT Token Info -------")
-        pprint(jwt)
-        print("DEBUG: ------- JWT Token Info END -------")
+        if jwt:
+            print("DEBUG: ------- JWT Token Info -------")
+            pprint(jwt)
+            print("DEBUG: ------- JWT Token Info END -------")
         request_headers = {}
         request_body = self.getBody()
         for header in self.headers._headers:
@@ -76,9 +77,14 @@ class EchoMicroService(server.BaseHTTPRequestHandler):
 
     def decodeJWT(self, headerName="X-JWT-Assertion"):
         jwt_header = self.headers.get(headerName)
+        if not jwt_header:
+            return None
         pub_key_path = path.dirname(__file__) + '/jwt_validation.pub.key'
         with open(pub_key_path, 'r') as public_key:
-            return jwt.decode(jwt_header, public_key.read(), algorithms='RS512')
+            try:
+                return jwt.decode(jwt_header, public_key.read(), algorithms='RS512')
+            except jwt.exceptions.InvalidAlgorithmError:
+                return jwt.decode(jwt_header, verify=False)
 
     port = 8008
     secured = False
