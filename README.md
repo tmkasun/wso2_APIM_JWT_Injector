@@ -1,4 +1,4 @@
-# How This Works!
+# How this stuff works!
 
 - This `org.wso2.carbon.custom.jwt.handler` is a custom [gateway handler](https://docs.wso2.com/display/AM250/Writing+Custom+Handlers) for WSO2 API Manager 2.5.0.
 
