@@ -29,11 +29,14 @@ public class AlterJWTHandler extends AbstractHandler {
     private static final String CUSTOM_HEADER_NAME = "x-myKey";
     private static final String JWT_HEADER_NAME = "X-JWT-Assertion";
 
+    // TODO: Implement JWT caching mechanism based on `CUSTOM_HEADER_NAME` and the authenticated user
     public boolean handleRequest(MessageContext messageContext) {
         Instant start = Instant.now();
         boolean result = alterJWT(messageContext);
         Instant end = Instant.now();
-        log.info("Time taken to handleRequest in AlterJWTHandler = "+ Duration.between(start, end));
+        if (log.isDebugEnabled()) {
+            log.debug("Time taken to handleRequest in AlterJWTHandler = " + Duration.between(start, end));
+        }
         return result;
     }
 
@@ -69,11 +72,14 @@ public class AlterJWTHandler extends AbstractHandler {
             Instant start = Instant.now();
             signedJWT.sign(signer);
             Instant end = Instant.now();
-            log.info("Time taken to sign the new JWT = "+ Duration.between(start, end));
-
+            if (log.isDebugEnabled()) {
+                log.debug("Time taken to sign the new JWT = " + Duration.between(start, end));
+            }
             String newJwtString = signedJWT.serialize();
             setJWTHeader(synCtx, newJwtString);
-            log.info(newJwtString);
+            if (log.isDebugEnabled()) {
+                log.debug(newJwtString);
+            }
 
         } catch (ParseException e) {
             e.printStackTrace();
